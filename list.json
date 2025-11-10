@@ -1,4 +1,4 @@
-// 自动生成的章节列表
+
 const txtList = [
   "フランのやきもち.txt",
   "四人のフランちゃん.txt",
@@ -11,4 +11,4 @@ const txtList = [
   "魔王憐の世界.txt"
 ];
 
-export default txtList;
+
