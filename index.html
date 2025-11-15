@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小说阅读器 - 目录</title>
+    <style>
+        body { font-family: 'Microsoft YaHei', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        h1 { text-align: center; color: #333; }
+        ul { list-style: none; padding: 0; }
+        li { margin: 10px 0; }
+        a { display: block; padding: 15px; background: #fff; text-decoration: none; color: #007bff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.3s; }
+        a:hover { background: #e9ecef; }
+        @media (max-width: 768px) { body { padding: 10px; } a { padding: 20px; font-size: 18px; } }
+    </style>
+</head>
+<body>
+    <h1>小说目录</h1>
+    <ul id="bookList"></ul>
+
+    <script>
+        fetch('books.json')
+            .then(response => response.json())
+            .then(books => {
+                const list = document.getElementById('bookList');
+                books.forEach(book => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.href = `reader.html?book=${encodeURIComponent(book.file)}`;
+                    a.textContent = book.title;
+                    li.appendChild(a);
+                    list.appendChild(li);
+                });
+            })
+            .catch(error => console.error('加载目录失败:', error));
+    </script>
+</body>
+</html>
