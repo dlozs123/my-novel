@@ -5,21 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小说阅读器</title>
     <style>
-        body { font-family: 'Microsoft YaHei', serif; margin: 0; padding: 20px; background: #fff; line-height: 1.6; }
-        .header { position: fixed; top: 0; left: 0; right: 0; background: #333; color: #fff; padding: 10px; text-align: center; z-index: 1000; transition: opacity 0.3s; }
-        .header.hidden { opacity: 0; pointer-events: none; }
-        .content { margin-top: 60px; padding: 20px; max-width: 800px; margin-left: auto; margin-right: auto; font-size: 16px; }
-        .back-btn { margin-right: 10px; color: #fff; text-decoration: none; }
-        .mode-btn { background: #007bff; color: #fff; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
-        .mobile-mode .header { opacity: 0; }
-        .mobile-mode .content { padding: 10px; margin-top: 0; font-size: 20px; text-align: justify; }
-        @media (max-width: 768px) { .content { padding: 10px; font-size: 18px; } .header { padding: 5px; } }
-        p { margin: 10px 0; text-indent: 2em; }
+        /* 基础样式 */
+        body { 
+            font-family: 'Microsoft YaHei', 'PingFang SC', serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #fff; 
+            line-height: 1.7; 
+            transition: all 0.3s ease;
+        }
+        .header { 
+            position: fixed; 
+            top: 0; left: 0; right: 0; 
+            background: #333; 
+            color: #fff; 
+            padding: 12px; 
+            text-align: center; 
+            z-index: 1000; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .header.hidden { 
+            opacity: 0; 
+            transform: translateY(-100%);
+            pointer-events: none; 
+        }
+        .back-btn { 
+            color: #fff; 
+            text-decoration: none; 
+            font-size: 15px; 
+            padding: 0 10px;
+        }
+        .mode-btn { 
+            background: #007bff; 
+            color: #fff; 
+            border: none; 
+            padding: 6px 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 14px;
+        }
+        .content { 
+            margin-top: 70px; 
+            padding: 20px; 
+            max-width: 800px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            font-size: 16px; 
+            text-align: justify;
+        }
+        p { 
+            margin: 12px 0; 
+            text-indent: 2em; 
+            word-break: break-all;
+        }
+
+        /* 默认小屏优化 */
+        @media (max-width: 768px) {
+            .content { 
+                padding: 15px; 
+                font-size: 17px; 
+                margin-top: 65px;
+            }
+            .header { padding: 10px; }
+            .back-btn, .mode-btn { font-size: 14px; }
+        }
+
+        /* ---------- 手机阅读模式 ---------- */
+        body.mobile-mode .header { 
+            opacity: 0 !important; 
+            transform: translateY(-100%) !important; 
+            pointer-events: none !important; 
+        }
+        body.mobile-mode .content { 
+            margin-top: 0 !important; 
+            padding: 15px !important; 
+            font-size: 20px !important; 
+            line-height: 2 !important; 
+            text-indent: 2em !important;
+        }
+        body.mobile-mode p { 
+            text-indent: 2em !important; 
+            margin: 16px 0 !important; 
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="back-btn">← 返回目录</a>
+        <a href="index.html" class="back-btn">返回目录</a>
         <span id="bookTitle"></span>
         <button class="mode-btn" onclick="toggleMobileMode()">手机模式</button>
     </div>
@@ -28,53 +103,62 @@
     </div>
 
     <script>
-        function decodeText(buffer, encoding = 'utf-8') {
-            const decoder = new TextDecoder(encoding);
-            let text = decoder.decode(buffer);
-            // 如果UTF-8乱码，尝试GBK（常见中文小说编码）
-            if (encoding === 'utf-8' && /[\u4e00-\u9fa5]/.test(text) && text.includes(' ')) {
+        // === 编码自动转换（GBK → UTF-8）===
+        function decodeText(buffer) {
+            let text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+            // 若出现替换字符 �，说明 UTF-8 失败，尝试 GBK
+            if (text.includes('�') && /[\u4e00-\u9fa5]/.test(text)) {
                 try {
-                    const gbkDecoder = new TextDecoder('gbk');
-                    text = gbkDecoder.decode(buffer);
+                    text = new TextDecoder('gbk').decode(buffer);
                 } catch (e) {
-                    console.warn('GBK解码失败，使用UTF-8');
+                    console.warn('GBK 解码失败，保留 UTF-8');
                 }
             }
             return text;
         }
 
+        // === 加载小说 ===
         function loadBook() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const bookFile = urlParams.get('book');
-            if (!bookFile) {
+            const params = new URLSearchParams(location.search);
+            const file = params.get('book');
+            if (!file) {
                 document.getElementById('content').innerHTML = '<p>未指定小说文件。</p>';
                 return;
             }
 
-            const title = decodeURIComponent(bookFile.replace('.txt', ''));
+            const title = decodeURIComponent(file.replace('.txt', ''));
             document.getElementById('bookTitle').textContent = title;
 
-            fetch(`txt/${bookFile}`)
-                .then(response => response.arrayBuffer())
-                .then(buffer => {
-                    const text = decodeText(buffer);
-                    const content = document.getElementById('content');
-                    content.innerHTML = text.split('\n').map(line => `<p>${line.trim() || '&nbsp;'}</p>`).join('');
+            fetch(`txt/${file}`)
+                .then(r => r.arrayBuffer())
+                .then(buf => {
+                    const text = decodeText(buf);
+                    const lines = text.split(/\r?\n/).map(l => l.trim() || '&nbsp;');
+                    const html = lines.map(line => `<p>${line}</p>`).join('');
+                    document.getElementById('content').innerHTML = html;
                 })
-                .catch(error => {
-                    document.getElementById('content').innerHTML = `<p>加载小说失败: ${error.message}</p>`;
-                    console.error('加载失败:', error);
+                .catch(err => {
+                    document.getElementById('content').innerHTML = `<p>加载失败：${err.message}</p>`;
                 });
         }
 
+        // === 切换手机模式 ===
         function toggleMobileMode() {
             document.body.classList.toggle('mobile-mode');
             const btn = document.querySelector('.mode-btn');
             btn.textContent = document.body.classList.contains('mobile-mode') ? '正常模式' : '手机模式';
         }
 
-        // 页面加载时读取小说
-        window.onload = loadBook;
+        // === 长按/双击切换（手机备用）===
+        let tapCount = 0;
+        document.addEventListener('dblclick', e => {
+            if (e.target.closest('.content')) {
+                toggleMobileMode();
+            }
+        });
+
+        // === 初始化 ===
+        window.addEventListener('load', loadBook);
     </script>
 </body>
 </html>
