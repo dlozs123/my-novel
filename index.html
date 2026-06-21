@@ -4,35 +4,350 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小说阅读器 - 目录</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Microsoft YaHei', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        h1 { text-align: center; color: #333; }
-        ul { list-style: none; padding: 0; }
-        li { margin: 10px 0; }
-        a { display: block; padding: 15px; background: #fff; text-decoration: none; color: #007bff; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: background 0.3s; }
-        a:hover { background: #e9ecef; }
-        @media (max-width: 768px) { body { padding: 10px; } a { padding: 20px; font-size: 18px; } }
+        :root {
+            --primary-color: #b3001e;       /* 深红/绯红 (Scarlet) */
+            --primary-light: #fff5f5;      /* 浅粉红背景 */
+            --text-main: #2c2523;          /* 深暖褐/近乎黑 */
+            --text-muted: #8c7e7a;         /* 暖灰褐 */
+            --bg-main: #faf8f5;            /* 温暖的纸张/米色背景 */
+            --bg-card: #ffffff;            /* 卡片背景 */
+            --border-color: #f0e6df;       /* 浅暖色边框 */
+            --shadow-color: rgba(140, 126, 122, 0.08);
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Serif SC', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 12px 0;
+            letter-spacing: -0.01em;
+            position: relative;
+            display: inline-block;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 48px;
+            height: 4px;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 18px;
+            font-style: italic;
+        }
+
+        .category-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .category-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-color);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(140, 126, 122, 0.12);
+            border-color: #e3d3c8;
+        }
+
+        .category-header {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            background: var(--bg-card);
+            transition: background-color 0.2s ease;
+            border-left: 6px solid var(--primary-color);
+        }
+
+        .category-header:hover {
+            background-color: #fdfcfb;
+        }
+
+        .title-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .category-title {
+            font-family: 'Noto Serif SC', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .novel-count-badge {
+            background: var(--primary-light);
+            color: var(--primary-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(179, 0, 30, 0.12);
+        }
+
+        .arrow-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--bg-main);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+        }
+
+        .category-header:hover .arrow-icon {
+            background-color: #eeded4;
+            color: var(--text-main);
+        }
+
+        /* 列表展开折叠的样式与动画 */
+        .novel-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .novel-list li {
+            border-top: 1px solid var(--border-color);
+        }
+
+        .novel-list a {
+            display: block;
+            padding: 16px 28px 16px 44px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: background-color 0.2s ease, color 0.2s ease, padding-left 0.2s ease;
+            position: relative;
+        }
+
+        .novel-list a::before {
+            content: '•';
+            position: absolute;
+            left: 28px;
+            color: var(--text-muted);
+            opacity: 0.5;
+            transition: color 0.2s, opacity 0.2s;
+        }
+
+        .novel-list a:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            padding-left: 52px;
+        }
+
+        .novel-list a:hover::before {
+            color: var(--primary-color);
+            opacity: 1;
+        }
+
+        .error-msg {
+            text-align: center;
+            padding: 40px;
+            color: var(--primary-color);
+            background: var(--primary-light);
+            border-radius: 16px;
+            border: 1px dashed rgba(179, 0, 30, 0.3);
+            font-weight: 500;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 24px 16px;
+            }
+            h1 {
+                font-size: 2.1rem;
+            }
+            .category-header {
+                padding: 16px 20px;
+            }
+            .novel-list a {
+                padding: 14px 20px 14px 36px;
+            }
+            .novel-list a::before {
+                left: 20px;
+            }
+            .novel-list a:hover {
+                padding-left: 44px;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>小说目录</h1>
-    <ul id="bookList"></ul>
+    <div class="container">
+        <header>
+            <h1>小说书架</h1>
+            <div class="subtitle">红魔馆藏书室的分馆目录</div>
+        </header>
+
+        <div id="categoryList" class="category-list">
+            <!-- 动态生成分类卡片 -->
+        </div>
+    </div>
 
     <script>
-        fetch('books.json')
-            .then(response => response.json())
-            .then(books => {
-                const list = document.getElementById('bookList');
-                books.forEach(book => {
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    a.href = `reader.html?book=${encodeURIComponent(book.file)}`;
-                    a.textContent = book.title;
-                    li.appendChild(a);
-                    list.appendChild(li);
-                });
+        fetch('list.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应错误');
+                }
+                return response.json();
             })
-            .catch(error => console.error('加载目录失败:', error));
+            .then(data => {
+                const categoryList = document.getElementById('categoryList');
+                categoryList.innerHTML = ''; // 清空加载提示或其他内容
+
+                // 遍历分类数据
+                for (const [category, files] of Object.entries(data)) {
+                    if (!files || files.length === 0) continue;
+
+                    // 1. 创建卡片容器
+                    const card = document.createElement('div');
+                    card.className = 'category-card collapsed'; // 默认折叠
+
+                    // 2. 创建头部
+                    const header = document.createElement('div');
+                    header.className = 'category-header';
+
+                    // 头部标题包装
+                    const titleWrapper = document.createElement('div');
+                    titleWrapper.className = 'title-wrapper';
+
+                    // 旋转箭头
+                    const arrow = document.createElement('span');
+                    arrow.className = 'arrow-icon';
+                    arrow.textContent = '▶';
+
+                    // 标题名称
+                    const title = document.createElement('span');
+                    title.className = 'category-title';
+                    title.textContent = category;
+
+                    titleWrapper.appendChild(arrow);
+                    titleWrapper.appendChild(title);
+
+                    // 数量徽章
+                    const badge = document.createElement('span');
+                    badge.className = 'novel-count-badge';
+                    badge.textContent = `${files.length} 篇`;
+
+                    header.appendChild(titleWrapper);
+                    header.appendChild(badge);
+
+                    // 3. 创建小说列表
+                    const listUl = document.createElement('ul');
+                    listUl.className = 'novel-list';
+
+                    files.forEach(fileName => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.href = `reader.html?book=${encodeURIComponent(fileName)}`;
+                        
+                        // 小说名统一用文件名去掉.txt即可
+                        const displayName = fileName.endsWith('.txt') 
+                            ? fileName.slice(0, -4) 
+                            : fileName;
+                        
+                        a.textContent = displayName;
+                        li.appendChild(a);
+                        listUl.appendChild(li);
+                    });
+
+                    // 4. 点击折叠和展开事件
+                    header.addEventListener('click', () => {
+                        const isCollapsed = card.classList.contains('collapsed');
+                        
+                        if (isCollapsed) {
+                            // 展开
+                            card.classList.remove('collapsed');
+                            listUl.style.maxHeight = listUl.scrollHeight + 'px';
+                            arrow.style.transform = 'rotate(90deg)';
+                            
+                            // 动画结束后，将 maxHeight 设为 none，使内容自适应大小
+                            const onTransitionEnd = () => {
+                                if (!card.classList.contains('collapsed')) {
+                                    listUl.style.maxHeight = 'none';
+                                }
+                                listUl.removeEventListener('transitionend', onTransitionEnd);
+                            };
+                            listUl.addEventListener('transitionend', onTransitionEnd);
+                        } else {
+                            // 折叠
+                            // 先将 maxHeight 设为当前的 scrollHeight (防止 none 导致无过渡动画)
+                            listUl.style.maxHeight = listUl.scrollHeight + 'px';
+                            listUl.offsetHeight; // 强制重绘
+                            
+                            card.classList.add('collapsed');
+                            listUl.style.maxHeight = '0px';
+                            arrow.style.transform = 'rotate(0deg)';
+                        }
+                    });
+
+                    // 5. 组合并挂载
+                    card.appendChild(header);
+                    card.appendChild(listUl);
+                    categoryList.appendChild(card);
+                }
+            })
+            .catch(error => {
+                console.error('加载目录失败:', error);
+                const categoryList = document.getElementById('categoryList');
+                categoryList.innerHTML = `<div class="error-msg">加载书架目录失败，请检查 list.json 是否正确配置。</div>`;
+            });
     </script>
 </body>
 </html>
